@@ -1,38 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Leetcode Scoreboard</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
     <div class="container">
-        <h1>Leetcode Scoreboard</h1>
-        <div class="form-container">
-            <input type="text" id="username" placeholder="Enter Leetcode Username">
-            <button onclick="addUser()">Add User</button>
-            <button onclick="refreshStats()">Refresh Stats</button>
-        </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Username</th>
-                    <th>Solved Today</th>
-                    <th>Solved This Week</th>
-                    <th>Easy Solved</th>
-                    <th>Medium Solved</th>
-                    <th>Hard Solved</th>
-                    <th>Total Solved</th>
-                    <th>Ranking</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="scoreboard">
-                <!-- Users will be added here -->
-            </tbody>
-        </table>
+      <h1>Leetcode Scoreboard</h1>
+      <div class="form-container">
+        <input
+          type="text"
+          id="username"
+          placeholder="Enter Leetcode Username"
+        />
+        <button onclick="addUser()">Add User</button>
+        <button onclick="refreshStats()">Refresh Stats</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Solved Today</th>
+            <th>Solved This Week</th>
+            <th>Easy Solved</th>
+            <th>Medium Solved</th>
+            <th>Hard Solved</th>
+            <th>Total Solved</th>
+            <th>Ranking</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="scoreboard">
+          <!-- Users will be added here -->
+        </tbody>
+      </table>
     </div>
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
-</body>
+  </body>
 </html>

@@ -1,43 +1,49 @@
 document.addEventListener('DOMContentLoaded', (event) => {
+    initializeSupabase();
     loadUsers();
 });
+
+function initializeSupabase() {
+    if (typeof supabase !== 'undefined') {
+        console.log('Supabase is loaded');
+        const SUPABASE_URL = 'https://kfcofpfbevvzobwddfwo.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmY29mcGZiZXZ2em9id2RkZndvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjI2NTY3NzcsImV4cCI6MjAzODIzMjc3N30.DpSz965U7f3NOMbQdAQoyenNdAL2tw-_OEMJIrF0y_8';
+        window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        console.log('Supabase client initialized', supabase);
+    } else {
+        console.log('Supabase is not loaded');
+    }
+}
 
 function addUser() {
     const username = document.getElementById('username').value.trim();
     if (username) {
-        fetchLeetcodeData(username);
+        saveUser(username);
         document.getElementById('username').value = '';
     }
 }
 
-function fetchLeetcodeData(username, callback) {
-    fetch(`https://leetcode-stats-api.herokuapp.com/${username}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                const user = {
-                    username: username,
-                    easySolved: data.easySolved,
-                    mediumSolved: data.mediumSolved,
-                    hardSolved: data.hardSolved,
-                    totalSolved: data.totalSolved,
-                    totalQuestions: data.totalQuestions,
-                    acceptanceRate: data.acceptanceRate,
-                    ranking: data.ranking,
-                    submissionCalendar: data.submissionCalendar,
-                    solvedToday: getSolvedToday(data),
-                    solvedThisWeek: getSolvedThisWeek(data)
-                };
-                if (callback) callback(user);
-                else {
-                    saveUser(user);
-                    loadUsers();
-                }
-            } else {
-                console.error('Error retrieving user data:', data.message);
-            }
-        })
-        .catch(error => console.error('Error fetching user data:', error));
+async function fetchLeetcodeData(username, callback) {
+    const response = await fetch(`https://leetcode-stats-api.herokuapp.com/${username}`);
+    const data = await response.json();
+
+    if (data.status === 'success') {
+        const user = {
+            username: username,
+            easySolved: data.easySolved,
+            mediumSolved: data.mediumSolved,
+            hardSolved: data.hardSolved,
+            totalSolved: data.totalSolved,
+            totalQuestions: data.totalQuestions,
+            acceptanceRate: data.acceptanceRate,
+            ranking: data.ranking,
+            solvedToday: getSolvedToday(data),
+            solvedThisWeek: getSolvedThisWeek(data)
+        };
+        if (callback) callback(user);
+    } else {
+        console.error('Error retrieving user data:', data.message);
+    }
 }
 
 function addUserToBoard(user) {
@@ -57,11 +63,17 @@ function addUserToBoard(user) {
     scoreboard.appendChild(row);
 }
 
-function deleteUser(username) {
-    let users = JSON.parse(localStorage.getItem('users')) || [];
-    users = users.filter(user => user.username !== username);
-    localStorage.setItem('users', JSON.stringify(users));
-    loadUsers();
+async function deleteUser(username) {
+    const { error } = await supabase
+        .from('users')
+        .delete()
+        .eq('username', username);
+
+    if (error) {
+        console.error('Error removing user:', error);
+    } else {
+        loadUsers();
+    }
 }
 
 function getSolvedToday(data) {
@@ -72,45 +84,61 @@ function getSolvedToday(data) {
     return solvedToday;
 }
 
-function getSolvedThisWeek(user) {
+function getSolvedThisWeek(data) {
     const today = new Date();
     const startOfWeek = new Date(today.setUTCDate(today.getUTCDate() - today.getUTCDay()));
     const weekStartTimestamp = Date.UTC(startOfWeek.getUTCFullYear(), startOfWeek.getUTCMonth(), startOfWeek.getUTCDate()) / 1000;
     let solvedThisWeek = 0;
-    for (let timestamp in user.submissionCalendar) {
+    for (let timestamp in data.submissionCalendar) {
         if (timestamp >= weekStartTimestamp) {
-            solvedThisWeek += user.submissionCalendar[timestamp];
+            solvedThisWeek += data.submissionCalendar[timestamp];
         }
     }
     return solvedThisWeek;
 }
 
-function saveUser(user) {
-    let users = JSON.parse(localStorage.getItem('users')) || [];
-    users.push(user);
-    localStorage.setItem('users', JSON.stringify(users));
+async function saveUser(username) {
+    const { error } = await supabase
+        .from('users')
+        .upsert({ username: username });
+
+    if (error) {
+        console.error('Error saving user:', error);
+    } else {
+        loadUsers();
+    }
 }
 
-function loadUsers() {
-    let users = JSON.parse(localStorage.getItem('users')) || [];
-    users.sort((a, b) => b.solvedToday - a.solvedToday);
-    document.getElementById('scoreboard').innerHTML = '';
-    users.forEach(user => addUserToBoard(user));
-}
+async function loadUsers() {
+    const { data: users, error } = await supabase
+        .from('users')
+        .select('*');
 
-function refreshStats() {
-    let users = JSON.parse(localStorage.getItem('users')) || [];
+    if (error) {
+        console.error('Error loading users:', error);
+        return;
+    }
+
     document.getElementById('scoreboard').innerHTML = '';
+
     users.forEach(user => {
-        fetchLeetcodeData(user.username, (updatedUser) => {
-            updateUser(updatedUser);
-            loadUsers();
-        });
+        fetchLeetcodeData(user.username, addUserToBoard);
     });
 }
 
-function updateUser(updatedUser) {
-    let users = JSON.parse(localStorage.getItem('users')) || [];
-    users = users.map(user => user.username === updatedUser.username ? updatedUser : user);
-    localStorage.setItem('users', JSON.stringify(users));
+async function refreshStats() {
+    const { data: users, error } = await supabase
+        .from('users')
+        .select('*');
+
+    if (error) {
+        console.error('Error loading users:', error);
+        return;
+    }
+
+    document.getElementById('scoreboard').innerHTML = '';
+
+    for (const user of users) {
+        fetchLeetcodeData(user.username, addUserToBoard);
+    }
 }
