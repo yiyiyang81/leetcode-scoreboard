@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 function initializeSupabase() {
     if (typeof supabase !== 'undefined') {
         console.log('Supabase is loaded');
+        // REPLACE WITH YOUR SUPABASE URL AND KEY
         const SUPABASE_URL = 'https://kfcofpfbevvzobwddfwo.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmY29mcGZiZXZ2em9id2RkZndvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjI2NTY3NzcsImV4cCI6MjAzODIzMjc3N30.DpSz965U7f3NOMbQdAQoyenNdAL2tw-_OEMJIrF0y_8';
         window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
