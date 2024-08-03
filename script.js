@@ -58,12 +58,12 @@ function addUserToBoard(user) {
         <td>${user.hardSolved}</td>
         <td>${user.totalSolved}</td>
         <td>${user.ranking}</td>
-        <td><button onclick="deleteUser('${user.username}')">Delete</button></td>
+        <td><button onclick="deleteUser('${user.username}', this)">Delete</button></td>
     `;
     scoreboard.appendChild(row);
 }
 
-async function deleteUser(username) {
+async function deleteUser(username, button) {
     const { error } = await supabase
         .from('users')
         .delete()
@@ -72,7 +72,9 @@ async function deleteUser(username) {
     if (error) {
         console.error('Error removing user:', error);
     } else {
-        loadUsers();
+        console.log(`User ${username} deleted from database.`);
+        const row = button.parentNode.parentNode;
+        row.parentNode.removeChild(row);
     }
 }
 
@@ -110,6 +112,7 @@ async function saveUser(username) {
 }
 
 async function loadUsers() {
+    console.log('Loading users...');
     const { data: users, error } = await supabase
         .from('users')
         .select('*');
@@ -119,11 +122,14 @@ async function loadUsers() {
         return;
     }
 
+    console.log('Users loaded:', users);
+
     document.getElementById('scoreboard').innerHTML = '';
 
-    users.forEach(user => {
-        fetchLeetcodeData(user.username, addUserToBoard);
-    });
+    for (const user of users) {
+        console.log('Fetching data for user:', user.username);
+        await fetchLeetcodeData(user.username, addUserToBoard);
+    }
 }
 
 async function refreshStats() {
